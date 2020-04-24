@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from flask import Flask, make_response, request, session, render_template, send_file, Response
+from flask import Flask, make_response, request, render_template, send_file, Response
 from flask.views import MethodView
 from werkzeug import secure_filename
 from datetime import datetime
@@ -10,26 +10,28 @@ import re
 import stat
 import json
 import mimetypes
-import sys
 from pathlib2 import Path
 
 app = Flask(__name__, static_url_path='/assets', static_folder='assets')
-root = os.path.normpath("/tmp")
-key = ""
+root = Path(os.getenv('FS_PATH', '/tmp')).absolute()
+key = os.getenv('FS_KEY', '')
 
 ignored = ['.bzr', '$RECYCLE.BIN', '.DAV', '.DS_Store', '.git', '.hg', '.htaccess', '.htpasswd', '.Spotlight-V100', '.svn', '__MACOSX', 'ehthumbs.db', 'robots.txt', 'Thumbs.db', 'thumbs.tps']
 datatypes = {'audio': 'm4a,mp3,oga,ogg,webma,wav', 'archive': '7z,zip,rar,gz,tar', 'image': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'pdf': 'pdf', 'quicktime': '3g2,3gp,3gp2,3gpp,mov,qt', 'source': 'atom,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml,plist', 'text': 'txt', 'video': 'mp4,m4v,ogv,webm', 'website': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
-icontypes = {'fa-music': 'm4a,mp3,oga,ogg,webma,wav', 'fa-archive': '7z,zip,rar,gz,tar', 'fa-picture-o': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'fa-file-text': 'pdf', 'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt', 'fa-code': 'atom,plist,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml', 'fa-file-text-o': 'txt', 'fa-film': 'mp4,m4v,ogv,webm', 'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
+icontypes = {'fa-music': 'm4a,mp3,oga,ogg,webma,wav', 'fa-archive': '7z,zip,rar,gz,tar', 'fa-picture-o': 'gif,ico,jpe,jpeg,jpg,png,svg,webp', 'fa-file-text': 'pdf', 'fa-film': '3g2,3gp,3gp2,3gpp,mov,qt,mp4,m4v,ogv,webm', 'fa-code': 'atom,plist,bat,bash,c,cmd,coffee,css,hml,js,json,java,less,markdown,md,php,pl,py,rb,rss,sass,scpt,swift,scss,sh,xml,yml', 'fa-file-text-o': 'txt', 'fa-globe': 'htm,html,mhtm,mhtml,xhtm,xhtml'}
+
 
 @app.template_filter('size_fmt')
 def size_fmt(size):
     return humanize.naturalsize(size)
+
 
 @app.template_filter('time_fmt')
 def time_desc(timestamp):
     mdate = datetime.fromtimestamp(timestamp)
     str = mdate.strftime('%Y-%m-%d %H:%M:%S')
     return str
+
 
 @app.template_filter('data_fmt')
 def data_fmt(filename):
@@ -39,6 +41,7 @@ def data_fmt(filename):
             t = type
     return t
 
+
 @app.template_filter('icon_fmt')
 def icon_fmt(filename):
     i = 'fa-file-o'
@@ -47,17 +50,20 @@ def icon_fmt(filename):
             i = icon
     return i
 
+
 @app.template_filter('humanize')
 def time_humanize(timestamp):
     mdate = datetime.utcfromtimestamp(timestamp)
     return humanize.naturaltime(mdate)
 
+
 def get_type(mode):
-    if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+    if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):  # link???
         type = 'dir'
     else:
         type = 'file'
     return type
+
 
 def partial_response(path, start, end=None):
     file_size = os.path.getsize(path)
@@ -69,11 +75,11 @@ def partial_response(path, start, end=None):
 
     with open(path, 'rb') as fd:
         fd.seek(start)
-        bytes = fd.read(length)
-    assert len(bytes) == length
+        _bytes = fd.read(length)
+    assert len(_bytes) == length
 
     response = Response(
-        bytes,
+        _bytes,
         206,
         mimetype=mimetypes.guess_type(path)[0],
         direct_passthrough=True,
@@ -88,9 +94,10 @@ def partial_response(path, start, end=None):
     )
     return response
 
+
 def get_range(request):
     range = request.headers.get('Range')
-    m = re.match('bytes=(?P<start>\d+)-(?P<end>\d+)?', range)
+    m = re.match(r'bytes=(?P<start>\d+)-(?P<end>\d+)?', range)
     if m:
         start = m.group('start')
         end = m.group('end')
@@ -101,22 +108,24 @@ def get_range(request):
     else:
         return 0, None
 
+
 class PathView(MethodView):
+
     def get(self, p=''):
         hide_dotfile = request.args.get('hide-dotfile', request.cookies.get('hide-dotfile', 'no'))
 
-        path = os.path.join(root, p)
+        path = root / p
 
-        if os.path.isdir(path):
+        if path.is_dir():
             contents = []
             total = {'size': 0, 'dir': 0, 'file': 0}
             for filename in os.listdir(path):
                 if filename in ignored:
                     continue
-                if hide_dotfile == 'yes' and filename[0] == '.':
+                if hide_dotfile == 'yes' and filename.startswith('.'):
                     continue
-                filepath = os.path.join(path, filename)
-                stat_res = os.stat(filepath)
+                filepath = path / filename
+                stat_res = filepath.lstat()
                 info = {}
                 info['name'] = filename
                 info['mtime'] = stat_res.st_mtime
@@ -130,7 +139,7 @@ class PathView(MethodView):
             page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile=hide_dotfile)
             res = make_response(page, 200)
             res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
-        elif os.path.isfile(path):
+        elif path.is_file():
             if 'Range' in request.headers:
                 start, end = get_range(request)
                 res = partial_response(path, start, end)
@@ -140,18 +149,18 @@ class PathView(MethodView):
         else:
             res = make_response('Not found', 404)
         return res
-    
+
     def put(self, p=''):
         if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            dir_path = os.path.dirname(path)
-            Path(dir_path).mkdir(parents=True, exist_ok=True)
+            path = root / p
+            dir_path = path.parent
+            dir_path.mkdir(parents=True, exist_ok=True)
 
             info = {}
-            if os.path.isdir(dir_path):
+            if dir_path.is_dir():
                 try:
-                    filename = secure_filename(os.path.basename(path))
-                    with open(os.path.join(dir_path, filename), 'wb') as f:
+                    filename = secure_filename(path.name)
+                    with open(dir_path / filename, 'wb') as f:
                         f.write(request.stream.read())
                 except Exception as e:
                     info['status'] = 'error'
@@ -162,28 +171,28 @@ class PathView(MethodView):
             else:
                 info['status'] = 'error'
                 info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 201)
+            res = make_response(json.dumps(info), 201)
             res.headers.add('Content-type', 'application/json')
         else:
-            info = {} 
+            info = {}
             info['status'] = 'error'
             info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
+            res = make_response(json.dumps(info), 401)
             res.headers.add('Content-type', 'application/json')
         return res
 
     def post(self, p=''):
         if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            Path(path).mkdir(parents=True, exist_ok=True)
+            path = root / p
+            path.mkdir(parents=True, exist_ok=True)
 
             info = {}
-            if os.path.isdir(path):
+            if path.is_dir():
                 files = request.files.getlist('files[]')
                 for file in files:
                     try:
                         filename = secure_filename(file.filename)
-                        file.save(os.path.join(path, filename))
+                        file.save(path / filename)
                     except Exception as e:
                         info['status'] = 'error'
                         info['msg'] = str(e)
@@ -193,28 +202,28 @@ class PathView(MethodView):
             else:
                 info['status'] = 'error'
                 info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 200)
+            res = make_response(json.dumps(info), 200)
             res.headers.add('Content-type', 'application/json')
         else:
             info = {} 
             info['status'] = 'error'
             info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
+            res = make_response(json.dumps(info), 401)
             res.headers.add('Content-type', 'application/json')
         return res
-    
+
     def delete(self, p=''):
         if request.cookies.get('auth_cookie') == key:
-            path = os.path.join(root, p)
-            dir_path = os.path.dirname(path)
-            Path(dir_path).mkdir(parents=True, exist_ok=True)
+            path = root / p
+            dir_path = path.parent
+            # dir_path.mkdir(parents=True, exist_ok=True)  -- why mkdir if delete?
 
             info = {}
-            if os.path.isdir(dir_path):
+            if dir_path.is_dir():
                 try:
-                    filename = secure_filename(os.path.basename(path))
-                    os.remove(os.path.join(dir_path, filename))
-                    os.rmdir(dir_path)
+                    filename = secure_filename(path.name)
+                    (dir_path / filename).unlink()
+                    # os.rmdir(dir_path)
                 except Exception as e:
                     info['status'] = 'error'
                     info['msg'] = str(e)
@@ -224,15 +233,16 @@ class PathView(MethodView):
             else:
                 info['status'] = 'error'
                 info['msg'] = 'Invalid Operation'
-            res = make_response(json.JSONEncoder().encode(info), 204)
+            res = make_response(json.dumps(info), 204)
             res.headers.add('Content-type', 'application/json')
         else:
             info = {}
             info['status'] = 'error'
             info['msg'] = 'Authentication failed'
-            res = make_response(json.JSONEncoder().encode(info), 401)
+            res = make_response(json.dumps(info), 401)
             res.headers.add('Content-type', 'application/json')
         return res
+
 
 path_view = PathView.as_view('path_view')
 app.add_url_rule('/', view_func=path_view)
@@ -241,6 +251,4 @@ app.add_url_rule('/<path:p>', view_func=path_view)
 if __name__ == '__main__':
     bind = os.getenv('FS_BIND', '0.0.0.0')
     port = os.getenv('FS_PORT', '8000')
-    root = os.path.normpath(os.getenv('FS_PATH', '/tmp'))
-    key = os.getenv('FS_KEY')
     app.run(bind, port, threaded=True, debug=False)

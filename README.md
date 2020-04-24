@@ -37,6 +37,7 @@ FS_KEY = Param for authentication key as base64 encoded username:password, defau
   - Refactor existing code
   - Introduce  Copy, Move, Delete operations (API first)
   - later in UI: right click menu
-  - UI: Make folder
+  - UI: Make folder,  and/or choose target folder at upload
   - Introduce Backend Database for file annotations and checksums
   - Enhance authentication: Role Based Access for base folders 'repositories' (as a prototype, simply use different Unix users)
+     -- see e.g. https://blog.miguelgrinberg.com/post/restful-authentication-with-flask
