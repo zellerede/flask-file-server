@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask import Flask, make_response, request, session, render_template, send_file, Response
 from flask.views import MethodView
 from werkzeug import secure_filename

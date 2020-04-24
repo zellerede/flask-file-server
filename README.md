@@ -2,7 +2,7 @@
    **!!! UNDER CONSTRUCTION !!!**
 
 
-#flask-file-server
+# flask-file-server
 
 A flask file server with an elegant frontend for 
   - browsing, 
@@ -11,9 +11,6 @@ A flask file server with an elegant frontend for
 files
 
 ![screenshot](https://raw.githubusercontent.com/zellerede/flask-file-server/master/screenshot.jpg)
-
-## Build
-```docker build --rm -t zellerede/flask-file-server:latest .```
 
 ## Run
 ```docker run -p 8000:8000 zellerede/flask-file-server```
@@ -26,3 +23,20 @@ FS_KEY = Param for authentication key as base64 encoded username:password, defau
 
 ```docker run -p 8000:8000 -e FS_BIND=0.0.0.0 -e FS_PORT=8000  -e FS_PATH=/tmp -e FS_KEY=dGVzdDp0ZXN0 zellerede/flask-file-server```
 
+
+# Contribute
+
+## Prerequisites
+```pip install -r requirements.txt```
+
+## Build docker
+```docker build --rm -t zellerede/flask-file-server:latest .```
+
+## TODO:
+  - Add tests!!
+  - Refactor existing code
+  - Introduce  Copy, Move, Delete operations (API first)
+  - later in UI: right click menu
+  - UI: Make folder
+  - Introduce Backend Database for file annotations and checksums
+  - Enhance authentication: Role Based Access for base folders 'repositories' (as a prototype, simply use different Unix users)
