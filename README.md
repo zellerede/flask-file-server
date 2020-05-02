@@ -30,7 +30,7 @@ FS_KEY = Param for authentication key as base64 encoded username:password, defau
 ```pip install -r requirements.txt```
 
 ## Build docker
-```docker build --rm -t zellerede/flask-file-server:latest .```
+```docker build -t zellerede/flask-file-server:latest .```
 
 ## TODO:
   - Add tests!!

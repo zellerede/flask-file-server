@@ -9,6 +9,7 @@ import stat
 import json
 import mimetypes
 import prepare_app as prep
+import operations
 
 
 def get_type(mode):
@@ -204,6 +205,7 @@ class PathView(MethodView):
 
 app = prep.app
 path_view = PathView.as_view('path_view')
+app.register_blueprint(operations.api)
 app.add_url_rule('/', view_func=path_view)
 app.add_url_rule('/<path:p>', view_func=path_view)
 
