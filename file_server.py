@@ -5,19 +5,10 @@ from flask.views import MethodView
 from werkzeug import secure_filename
 import os
 import re
-import stat
 import json
 import mimetypes
 import prepare_app as prep
 import operations
-
-
-def get_type(mode):
-    if stat.S_ISDIR(mode) or stat.S_ISLNK(mode):  # link???
-        type = 'dir'
-    else:
-        type = 'file'
-    return type
 
 
 def partial_response(path, start, end=None):
@@ -111,7 +102,7 @@ class PathView(MethodView):
             info = {}
             info['name'] = filename
             info['mtime'] = stat_res.st_mtime
-            ft = get_type(stat_res.st_mode)
+            ft = 'dir' if filepath.is_dir() else 'file'
             info['type'] = ft
             total[ft] += 1
             sz = stat_res.st_size
@@ -130,6 +121,7 @@ class PathView(MethodView):
         dir_path = path.parent
         dir_path.mkdir(parents=True, exist_ok=True)
 
+        result_code = 201
         info = {}
         if dir_path.is_dir():
             try:
@@ -139,13 +131,15 @@ class PathView(MethodView):
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
+                result_code = 412
             else:
                 info['status'] = 'success'
                 info['msg'] = 'File Saved'
         else:
             info['status'] = 'error'
             info['msg'] = 'Invalid Operation'
-        res = make_response(json.dumps(info), 201)
+            result_code = 403
+        res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
 
@@ -153,8 +147,8 @@ class PathView(MethodView):
     def post(self, p=''):
         path = prep.root / p
         path.mkdir(parents=True, exist_ok=True)
-        result_code = 201
 
+        result_code = 201
         info = {}
         if path.is_dir():
             files = request.files.getlist('files[]')
@@ -181,24 +175,26 @@ class PathView(MethodView):
     def delete(self, p=''):
         path = prep.root / p
         dir_path = path.parent
-        # dir_path.mkdir(parents=True, exist_ok=True)  -- why mkdir if delete?
 
+        result_code = 204
         info = {}
         if dir_path.is_dir():
             try:
                 filename = secure_filename(path.name)
                 (dir_path / filename).unlink()
-                # os.rmdir(dir_path)
+                # os.rmdir(dir_path) # shutils.rmtree
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
+                result_code = 412
             else:
                 info['status'] = 'success'
                 info['msg'] = 'File Deleted'
         else:
             info['status'] = 'error'
             info['msg'] = 'Invalid Operation'
-        res = make_response(json.dumps(info), 204)
+            result_code = 403
+        res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
 
