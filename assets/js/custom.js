@@ -15,9 +15,11 @@ function getCookie(cname) {
 }
 $(document).ready(function(){
     $("#login").submit(function( event ) {
-      var hash = $.base64.encode($( "#username" ).val()+":"+$( "#password" ).val())      
-      document.cookie = "username="+$("#username").val()+";path=/"
-      document.cookie = "auth_cookie="+hash+";path=/"
+      var username = $( "#username" ).val();
+      var auth = username && username+":"+$( "#password" ).val();
+      var hash = $.base64.encode(auth);
+      document.cookie = "username="+$("#username").val()+";path=/";
+      document.cookie = "auth_cookie="+hash+";path=/";
       $("#userlogin").text($( "#username" ).val())
       $('#login-modal').modal('toggle');
       event.preventDefault();
@@ -45,7 +47,7 @@ $(document).ready(function(){
             }
         },
         uploadFile: {
-            url: "#",
+            url: "#",  //  TODO: customize url
             data: {},
             type: 'POST',
             enctype: 'multipart/form-data',
