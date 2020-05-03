@@ -8,6 +8,7 @@ import re
 import json
 import mimetypes
 from functools import wraps
+from uuid import uuid4
 
 import prepare_app as prep
 import operations
@@ -73,6 +74,7 @@ def authenticated(func):
 
 
 def path_operation(func):
+    # TODO: build _one_ decorator with parameters authenticate=False, mkdirs=False, etc.
     @wraps(func)
     def wrapped(self, p=''):
         self.orig_path = p
@@ -108,7 +110,7 @@ class PathView(MethodView):
             if hide_dotfile == 'yes' and filename.startswith('.'):
                 continue
             filepath = path / filename
-            stat_res = filepath.lstat()
+            stat_res = filepath.stat()
             info = {}
             info['name'] = filename
             info['mtime'] = stat_res.st_mtime
@@ -136,8 +138,10 @@ class PathView(MethodView):
         if dir_path.is_dir():
             try:
                 filename = secure_filename(path.name)
-                with open(dir_path / filename, 'wb') as f:
+                storepath = prep.store / str(uuid4())
+                with open(storepath, 'wb') as f:
                     f.write(request.stream.read())
+                (dir_path / filename).symlink_to(storepath)
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
@@ -165,7 +169,9 @@ class PathView(MethodView):
             for file in files:
                 try:
                     filename = secure_filename(file.filename)
-                    file.save(str(path / filename))
+                    storepath = prep.store / str(uuid4())
+                    file.save(str(storepath))
+                    (path / filename).symlink_to(storepath)
                 except Exception as e:
                     info['status'] = 'error'
                     info['msg'] = str(e)

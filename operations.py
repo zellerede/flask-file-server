@@ -1,20 +1,28 @@
 """
     file operation API endpoints
+    current version assumes that all the content in given folders
+    are symbolic links to a filestore folder
 """
 
 from flask import Blueprint, make_response, request
+import shutil
 import prepare_app as prep
 
 api = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
-def symlink(source, target):
-    target.symlink_to(source)
+def copy_links(source, target):
+    if source.is_dir():
+        shutil.copytree(source, target, symlinks=True)
+    elif source.is_file():
+        shutil.copy(source, target, follow_symlinks=False)
+    else:
+        raise Exception(f"404 Unknown source {source}")
 
 
 @api.route('/copy/<path:source>/', methods=['POST'])
 def copy(source=''):
-    return copy_or_move(source, symlink)
+    return copy_or_move(source, copy_links)
 
 
 @api.route('/move/<path:source>/', methods=['POST'])
@@ -36,6 +44,7 @@ def copy_or_move(source, oper):
         except Exception as e:
             print(f"[ERROR] {e}")
             info = str(e)  # TODO: maybe json
-            result_code = 500
+            maybe_result_code = info[:3]
+            result_code = int(maybe_result_code) if maybe_result_code.isdigit() else 500
 
     return make_response(info, result_code)
