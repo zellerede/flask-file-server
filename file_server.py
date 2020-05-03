@@ -2,16 +2,16 @@
 
 from flask import make_response, request, render_template, send_file, Response
 from flask.views import MethodView
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 import os
 import re
 import json
 import mimetypes
-from functools import wraps
 from uuid import uuid4
 
 import prepare_app as prep
 import operations
+from decorators import path_operation
 
 
 def partial_response(path, start, end=None):
@@ -56,36 +56,9 @@ def get_range(request):
         return 0, None
 
 
-def authenticated(func):
-    @wraps(func)
-    def authenticated_func(*args, **kwargs):
-        print(request.cookies.get('auth_cookie'), prep.key)
-        if request.cookies.get('auth_cookie') == prep.key:
-            res = func(*args, **kwargs)
-        else:
-            info = {}
-            info['status'] = 'error'
-            info['msg'] = 'Authentication failed'
-            res = make_response(json.dumps(info), 401)
-            res.headers.add('Content-type', 'application/json')
-        return res
-
-    return authenticated_func
-
-
-def path_operation(func):
-    # TODO: build _one_ decorator with parameters authenticate=False, mkdirs=False, etc.
-    @wraps(func)
-    def wrapped(self, p=''):
-        self.orig_path = p
-        path = prep.root / p
-        return func(self, path)
-    return wrapped
-
-
 class PathView(MethodView):
 
-    @path_operation
+    @path_operation()
     def get(self, path):
         if path.is_dir():
             res = self._get_dir(path)
@@ -127,8 +100,7 @@ class PathView(MethodView):
         # TODO: answer json if json was requested
         return res
 
-    @path_operation
-    @authenticated
+    @path_operation(authenticate=True)
     def put(self, path):
         dir_path = path.parent
         dir_path.mkdir(parents=True, exist_ok=True)
@@ -157,8 +129,7 @@ class PathView(MethodView):
         res.headers.add('Content-type', 'application/json')
         return res
 
-    @path_operation
-    @authenticated
+    @path_operation(authenticate=True)
     def post(self, path):
         path.mkdir(parents=True, exist_ok=True)
 
@@ -187,8 +158,7 @@ class PathView(MethodView):
         res.headers.add('Content-type', 'application/json')
         return res
 
-    @path_operation
-    @authenticated
+    @path_operation(authenticate=True)
     def delete(self, path):
         dir_path = path.parent
 
