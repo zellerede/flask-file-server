@@ -36,6 +36,6 @@ def copy_or_move(source, oper):
         except Exception as e:
             print(f"[ERROR] {e}")
             info = str(e)  # TODO: maybe json
-            result_code = 412
+            result_code = 500
 
     return make_response(info, result_code)

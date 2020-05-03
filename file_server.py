@@ -141,14 +141,14 @@ class PathView(MethodView):
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
-                result_code = 412
+                result_code = 500
             else:
                 info['status'] = 'success'
                 info['msg'] = 'File Saved'
         else:
             info['status'] = 'error'
             info['msg'] = 'Invalid Operation'
-            result_code = 403
+            result_code = 404
         res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
@@ -169,14 +169,14 @@ class PathView(MethodView):
                 except Exception as e:
                     info['status'] = 'error'
                     info['msg'] = str(e)
-                    result_code = 412
+                    result_code = 500
                 else:
                     info['status'] = 'success'
                     info['msg'] = 'File Saved'
         else:
             info['status'] = 'error'
             info['msg'] = 'Invalid Operation'
-            result_code = 403
+            result_code = 404
         res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
@@ -196,14 +196,14 @@ class PathView(MethodView):
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
-                result_code = 412
+                result_code = 500
             else:
                 info['status'] = 'success'
                 info['msg'] = 'File Deleted'
         else:
             info['status'] = 'error'
             info['msg'] = 'Invalid Operation'
-            result_code = 403
+            result_code = 404
         res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
