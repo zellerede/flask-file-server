@@ -7,6 +7,8 @@ import os
 import re
 import json
 import mimetypes
+from functools import wraps
+
 import prepare_app as prep
 import operations
 
@@ -54,6 +56,7 @@ def get_range(request):
 
 
 def authenticated(func):
+    @wraps(func)
     def authenticated_func(*args, **kwargs):
         print(request.cookies.get('auth_cookie'), prep.key)
         if request.cookies.get('auth_cookie') == prep.key:
@@ -66,16 +69,24 @@ def authenticated(func):
             res.headers.add('Content-type', 'application/json')
         return res
 
-    authenticated_func.__name__ = func.__name__
     return authenticated_func
+
+
+def path_operation(func):
+    @wraps(func)
+    def wrapped(self, p=''):
+        self.orig_path = p
+        path = prep.root / p
+        return func(self, path)
+    return wrapped
 
 
 class PathView(MethodView):
 
-    def get(self, p=''):
-        path = prep.root / p
+    @path_operation
+    def get(self, path):
         if path.is_dir():
-            res = self._get_dir(p)
+            res = self._get_dir(path)
         elif path.is_file():
             if 'Range' in request.headers:
                 start, end = get_range(request)
@@ -87,8 +98,7 @@ class PathView(MethodView):
             res = make_response('Not found', 404)
         return res
 
-    def _get_dir(self, p):
-        path = prep.root / p
+    def _get_dir(self, path):
         hide_dotfile = request.args.get('hide-dotfile', request.cookies.get('hide-dotfile', 'no'))
         contents = []
         total = {'size': 0, 'dir': 0, 'file': 0}
@@ -109,15 +119,15 @@ class PathView(MethodView):
             info['size'] = sz
             total['size'] += sz
             contents.append(info)
-        page = render_template('index.html', path=p, contents=contents, total=total, hide_dotfile=hide_dotfile)
+        page = render_template('index.html', path=self.orig_path, contents=contents, total=total, hide_dotfile=hide_dotfile)
         res = make_response(page, 200)
         res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
         # TODO: answer json if json was requested
         return res
 
+    @path_operation
     @authenticated
-    def put(self, p=''):
-        path = prep.root / p
+    def put(self, path):
         dir_path = path.parent
         dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -143,9 +153,9 @@ class PathView(MethodView):
         res.headers.add('Content-type', 'application/json')
         return res
 
+    @path_operation
     @authenticated
-    def post(self, p=''):
-        path = prep.root / p
+    def post(self, path):
         path.mkdir(parents=True, exist_ok=True)
 
         result_code = 201
@@ -171,9 +181,9 @@ class PathView(MethodView):
         res.headers.add('Content-type', 'application/json')
         return res
 
+    @path_operation
     @authenticated
-    def delete(self, p=''):
-        path = prep.root / p
+    def delete(self, path):
         dir_path = path.parent
 
         result_code = 204
