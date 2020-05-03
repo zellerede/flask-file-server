@@ -25,18 +25,32 @@ def authenticated(func):
 class path_operation:
     """ parametrized decorator """
 
-    def __init__(self, authenticate=False, mkdirs=False):
+    def __init__(self, authenticate=False, mkdirs=False, path_is_folder=False,
+                 check_dir=False):
         self.authenticate = authenticate
         self.mkdirs = mkdirs
+        self.path_is_folder = path_is_folder
+        self.chkdir = check_dir
 
     def __call__(self, func):
 
         @wraps(func)
-        def wrapped(self, p=''):
-            self.orig_path = p
+        def wrapped(_self, p=''):
+            _self.orig_path = p
             path = prep.root / p
-            return func(self, path)
+            _self.dir_path = path if self.path_is_folder else path.parent
+            if self.mkdirs:
+                _self.dir_path.mkdir(parents=True, exist_ok=True)
+            res = (self.chkdir or self.mkdirs) and self.check_dir(_self.dir_path)
+            return res or func(_self, path)
 
         if self.authenticate:
             wrapped = authenticated(wrapped)
         return wrapped
+
+    def check_dir(self, dir_path):
+        if not dir_path.is_dir():
+            info = {'status': 'error', 'msg': 'Invalid Operation'}
+            res = make_response(json.dumps(info), 404)
+            res.headers.add('Content-type', 'application/json')
+            return res

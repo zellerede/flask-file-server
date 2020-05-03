@@ -100,86 +100,61 @@ class PathView(MethodView):
         # TODO: answer json if json was requested
         return res
 
-    @path_operation(authenticate=True)
+    @path_operation(authenticate=True, mkdirs=True)
     def put(self, path):
-        dir_path = path.parent
-        dir_path.mkdir(parents=True, exist_ok=True)
-
         result_code = 201
-        info = {}
-        if dir_path.is_dir():
-            try:
-                filename = secure_filename(path.name)
-                storepath = prep.store / str(uuid4())
-                with open(storepath, 'wb') as f:
-                    f.write(request.stream.read())
-                (dir_path / filename).symlink_to(storepath)
-            except Exception as e:
-                info['status'] = 'error'
-                info['msg'] = str(e)
-                result_code = 500
-            else:
-                info['status'] = 'success'
-                info['msg'] = 'File Saved'
-        else:
+        info = {'status': 'success', 'msg': 'File Saved'}
+
+        try:
+            filename = secure_filename(path.name)
+            storepath = prep.store / str(uuid4())
+            with open(storepath, 'wb') as f:
+                f.write(request.stream.read())
+            (self.dir_path / filename).symlink_to(storepath)
+        except Exception as e:
             info['status'] = 'error'
-            info['msg'] = 'Invalid Operation'
-            result_code = 404
+            info['msg'] = str(e)
+            result_code = 500
+
         res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
 
-    @path_operation(authenticate=True)
+    @path_operation(authenticate=True, mkdirs=True, path_is_folder=True)
     def post(self, path):
-        path.mkdir(parents=True, exist_ok=True)
-
         result_code = 201
-        info = {}
-        if path.is_dir():
-            files = request.files.getlist('files[]')
-            for file in files:
-                try:
-                    filename = secure_filename(file.filename)
-                    storepath = prep.store / str(uuid4())
-                    file.save(str(storepath))
-                    (path / filename).symlink_to(storepath)
-                except Exception as e:
-                    info['status'] = 'error'
-                    info['msg'] = str(e)
-                    result_code = 500
-                else:
-                    info['status'] = 'success'
-                    info['msg'] = 'File Saved'
-        else:
-            info['status'] = 'error'
-            info['msg'] = 'Invalid Operation'
-            result_code = 404
-        res = make_response(json.dumps(info), result_code)
-        res.headers.add('Content-type', 'application/json')
-        return res
+        info = {'status': 'success', 'msg': 'File Saved'}
 
-    @path_operation(authenticate=True)
-    def delete(self, path):
-        dir_path = path.parent
-
-        result_code = 204
-        info = {}
-        if dir_path.is_dir():
+        files = request.files.getlist('files[]')
+        for file in files:
             try:
-                filename = secure_filename(path.name)
-                (dir_path / filename).unlink()
-                # os.rmdir(dir_path) # shutils.rmtree
+                filename = secure_filename(file.filename)
+                storepath = prep.store / str(uuid4())
+                file.save(str(storepath))
+                (path / filename).symlink_to(storepath)
             except Exception as e:
                 info['status'] = 'error'
                 info['msg'] = str(e)
                 result_code = 500
-            else:
-                info['status'] = 'success'
-                info['msg'] = 'File Deleted'
-        else:
+
+        res = make_response(json.dumps(info), result_code)
+        res.headers.add('Content-type', 'application/json')
+        return res
+
+    @path_operation(authenticate=True, check_dir=True)
+    def delete(self, path):
+        result_code = 204
+        info = {'status': 'success', 'msg': 'File Deleted'}
+
+        try:
+            filename = secure_filename(path.name)
+            (self.dir_path / filename).unlink()
+            # os.rmdir(dir_path) # shutils.rmtree
+        except Exception as e:
             info['status'] = 'error'
-            info['msg'] = 'Invalid Operation'
-            result_code = 404
+            info['msg'] = str(e)
+            result_code = 500
+
         res = make_response(json.dumps(info), result_code)
         res.headers.add('Content-type', 'application/json')
         return res
