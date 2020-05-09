@@ -38,6 +38,7 @@ def copy_or_move(source, oper):
         print(f"COPYING/MOVING, {source} -> {target}")
         source_path = (prep.root / source).absolute()
         target_path = (prep.root / target).absolute()
+        target_path.mkdir(parents=True, exist_ok=True)
         print(f"{source_path} ==> {target_path}")
         try:
             oper(source_path, target_path)
