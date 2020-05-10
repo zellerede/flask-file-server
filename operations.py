@@ -8,6 +8,7 @@ from flask import Blueprint, make_response, request
 import shutil
 import requests
 from glob import glob
+import re
 
 import prepare_app as prep
 
@@ -62,12 +63,16 @@ def send():
     target = data.get("target")
     assert isinstance(target, str), "Argument 'target' is obligatory"
     pathmaps = data.get("pathmaps", {})
+    assert isinstance(pathmaps, dict), "Argument 'pathmaps' must be a map (str->str)"
 
-    filepaths = set.union(*[set(glob(f"{prep.root}/{g}", recursive=True)) for g in globs])
+    globsets = (set(glob(f"{prep.root}/{g}", recursive=True)) for g in globs)
+    filepaths = set.union(*globsets)
 
     # TODO: launch sending in background, and send back 202
     for path in filepaths:
         relative = prep.relative(path)
+        for src, dst in pathmaps.items():
+            relative = re.sub(src, dst, relative)
         _send_a_file(path, f"{target}/{relative}")
 
     return "SUCCESS"  # maybe json
@@ -75,6 +80,12 @@ def send():
 
 def _send_a_file(source, target):
     if prep.Path(source).is_file():
-        print(f"Sending {target}")
+        print(f"Sending to {target}")
         with open(source, 'rb') as f:
             requests.put(target, data=f)
+
+
+#!/bin/bash
+# data='{"files": ["*"], "target": "http://localhost:8001", "pathmaps": {"t(.*).txt":"utu\\1.txt"}}'
+# data='{"files": ["a1/b1/**", "taa/other.txt"], "target": "http://localhost:8001/custom/root"}'
+# curl -i -H "Content-type:application/json" localhost:8000/api/v1/send/ -d "$data"
