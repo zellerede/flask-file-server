@@ -6,6 +6,9 @@
 
 from flask import Blueprint, make_response, request
 import shutil
+import requests
+from glob import glob
+
 import prepare_app as prep
 
 api = Blueprint('api', __name__, url_prefix='/api/v1')
@@ -21,12 +24,12 @@ def copy_links(source, target):
 
 
 @api.route('/copy/<path:source>/', methods=['POST'])
-def copy(source=''):
+def copy(source):
     return copy_or_move(source, copy_links)
 
 
 @api.route('/move/<path:source>/', methods=['POST'])
-def move(source=''):
+def move(source):
     return copy_or_move(source, prep.Path.rename)
 
 
@@ -49,3 +52,29 @@ def copy_or_move(source, oper):
             result_code = int(maybe_result_code) if maybe_result_code.isdigit() else 500
 
     return make_response(info, result_code)
+
+
+@api.route('/send/', methods=['POST'])
+def send():
+    data = request.get_json()
+    globs = data.get("files")
+    assert isinstance(globs, list), "Argument 'files' must be a list"
+    target = data.get("target")
+    assert isinstance(target, str), "Argument 'target' is obligatory"
+    pathmaps = data.get("pathmaps", {})
+
+    filepaths = set.union(*[set(glob(f"{prep.root}/{g}", recursive=True)) for g in globs])
+
+    # TODO: launch sending in background, and send back 202
+    for path in filepaths:
+        relative = prep.relative(path)
+        _send_a_file(path, f"{target}/{relative}")
+
+    return "SUCCESS"  # maybe json
+
+
+def _send_a_file(source, target):
+    if prep.Path(source).is_file():
+        print(f"Sending {target}")
+        with open(source, 'rb') as f:
+            requests.put(target, data=f)

@@ -8,6 +8,7 @@ import re
 import json
 import mimetypes
 from uuid import uuid4
+import shutil
 
 import prepare_app as prep
 import operations
@@ -148,8 +149,14 @@ class PathView(MethodView):
 
         try:
             filename = secure_filename(path.name)
-            (self.dir_path / filename).unlink()
-            # os.rmdir(dir_path) # shutils.rmtree
+            filepath = self.dir_path / filename
+            if filepath.is_dir():
+                shutil.rmtree(filepath)
+            elif filepath.is_file():
+                filepath.unlink()
+            else:
+                result_code = 404
+                info = {'status': 'failure', 'msg': 'Not Found'}
         except Exception as e:
             info['status'] = 'error'
             info['msg'] = str(e)

@@ -66,5 +66,9 @@ def time_humanize(timestamp):
     return humanize.naturaltime(mdate)
 
 
+def relative(path):
+    return path[(len(str(root)) + 1):]
+
+
 #
 store.mkdir(parents=True, exist_ok=True)

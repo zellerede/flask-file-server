@@ -36,6 +36,9 @@ class path_operation:
 
         @wraps(func)
         def wrapped(_self, p=''):
+            if p.startswith('api/'):
+                return self.json404()
+
             _self.orig_path = p
             path = prep.root / p
             _self.dir_path = path if self.path_is_folder else path.parent
@@ -44,13 +47,17 @@ class path_operation:
             res = (self.chkdir or self.mkdirs) and self.check_dir(_self.dir_path)
             return res or func(_self, path)
 
-        if self.authenticate:
+        if self.authenticate and prep.key:
             wrapped = authenticated(wrapped)
         return wrapped
 
     def check_dir(self, dir_path):
         if not dir_path.is_dir():
-            info = {'status': 'error', 'msg': 'Invalid Operation'}
-            res = make_response(json.dumps(info), 404)
-            res.headers.add('Content-type', 'application/json')
-            return res
+            print(f"Wrong folder: {dir_path}")  ###
+            return self.json404()
+
+    def json404(self):
+        info = {'status': 'error', 'msg': 'Invalid Operation'}
+        res = make_response(json.dumps(info), 404)
+        res.headers.add('Content-type', 'application/json')
+        return res
