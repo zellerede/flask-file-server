@@ -30,12 +30,8 @@
       </div>
       <div class="pull-sm-right">
         <div class="btn-group">
+          <!-- TODO: button for file operations -->
           <a data-toggle="modal" data-target="#uploader-modal" class="btn btn-secondary text-muted">Upload</a>
-          {% if hide_dotfile == 'yes' %}
-          <a href="?hide-dotfile=no" class="btn btn-secondary text-muted">Show Dotfiles</a>
-          {% else %}
-          <a href="?hide-dotfile=yes" class="btn btn-secondary text-muted">Hide Dotfiles</a>
-          {% endif %}
         </div>
       </div>
     </div>
@@ -57,16 +53,19 @@
         </tfoot>
         <tbody>
           {% for entry in contents if entry.type == 'dir' %}
-          <tr>
-              <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}"><i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a></td>
+          <tr class="jumbotron">
+            <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}">
+              <i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a>
+            </td>
             <td class="text-xs-right " data-sort-value="-1">&mdash;</td>
             <td class="text-xs-right " data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
           </tr>
           {% endfor %}
           {% for entry in contents if entry.type == 'file' %}
-          <tr>
+          <tr class="jumbotron">
               <td class="text-xs-left " data-sort-value="file-{{entry.name | lower}}"><i class="fa fa-fw {{entry.name | icon_fmt}} " aria-hidden="true"></i>&nbsp;
-              <a {% if entry.name | data_fmt not in ['unknown', 'archive'] %} data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}" {% endif %} href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">{{entry.name}}</a>
+                <a {% if entry.name | data_fmt not in ['unknown', 'archive'] %} data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}" {% endif %}
+                   href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">{{entry.name}}</a>
               </td>
               <td class="text-xs-right " data-sort-value="{{entry.size}}" title="{{entry.size}} bytes">{{entry.size | size_fmt}}</td>
               <td class="text-xs-right " data-sort-value="{{entry.mtime}}" title="{{entry.mtime | time_fmt}}">{{entry.mtime | humanize}}</td>
@@ -142,12 +141,20 @@
       </div>
     </div>
   </div>
+
+  <div class="dropdown-menu dropdown-menu-sm" id="context-menu">
+    <a class="dropdown-item" href="#">Action</a>
+    <a class="dropdown-item" href="#">Another action</a>
+    <a class="dropdown-item" href="#">Something else here</a>
+  </div>
+
   <script type="text/javascript" src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/tether.min.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/listr.pack.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/jquery.filer.min.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/jquery.base64.min.js')}}"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='js/popper.min.js')}}"></script>
   <script type="text/javascript" src="{{url_for('static', filename='js/custom.js')}}"></script>
 </body>
 </html>

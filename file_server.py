@@ -9,10 +9,14 @@ import json
 import mimetypes
 from uuid import uuid4
 import shutil
+import hashlib
 
 import prepare_app as prep
 import operations
 from decorators import path_operation
+
+
+CHUNKSIZE = 1<<20
 
 
 def partial_response(path, start, end=None):
@@ -101,6 +105,23 @@ class PathView(MethodView):
         # TODO: answer json if json was requested
         return res
 
+    def _save_file(self, fileobj, target_path):
+        temppath = prep.store / str(uuid4())
+        md5 = hashlib.md5()
+
+        with open(temppath, 'wb') as output:
+            while True:
+                data = fileobj.read(CHUNKSIZE)
+                if not data:
+                    break
+                md5.update(data)
+                output.write(data)
+        
+        storepath = prep.store / md5.hexdigest()
+        temppath.rename(storepath)
+        target_path.symlink_to(storepath)
+
+
     @path_operation(authenticate=True, mkdirs=True)
     def put(self, path):
         result_code = 201
@@ -108,10 +129,7 @@ class PathView(MethodView):
 
         try:
             filename = secure_filename(path.name)
-            storepath = prep.store / str(uuid4())
-            with open(storepath, 'wb') as f:
-                f.write(request.stream.read())
-            (self.dir_path / filename).symlink_to(storepath)
+            self._save_file(request.stream, self.dir_path / filename)
         except Exception as e:
             info['status'] = 'error'
             info['msg'] = str(e)
@@ -130,12 +148,10 @@ class PathView(MethodView):
         for file in files:
             try:
                 filename = secure_filename(file.filename)
-                storepath = prep.store / str(uuid4())
-                file.save(str(storepath))
-                (path / filename).symlink_to(storepath)
+                self._save_file(file, path / filename)
             except Exception as e:
                 info['status'] = 'error'
-                info['msg'] = str(e)
+                info['msg'] = f"{filename}: {e}"
                 result_code = 500
 
         res = make_response(json.dumps(info), result_code)
