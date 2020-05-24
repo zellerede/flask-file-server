@@ -147,9 +147,9 @@
           <div class="modal-body">
             <form id="create-folder">
               <span>Enter name of folder to be created:</span>
-              <input type="text" id="create-folder-input" autofocus
-                     value="{{path}}" autocomplete=“off” class="form-control"
-                     placeholder="{{'' if path else 'Type full folder path to create'}}">
+              <input type="text" id="create-folder-input" name="folderName" autofocus
+                     autocomplete=“off” class="form-control"
+                     placeholder="{{'Type ' + ('relative or ' if path else '') + 'full folder path to create'}}">
             </form>
           </div>
           <div class="modal-footer">
@@ -164,9 +164,9 @@
   </div>
 
   <div class="dropdown-menu dropdown-menu-sm" id="context-menu">
-    <a class="dropdown-item" href="#">Copy</a>
-    <a class="dropdown-item" href="#">Move</a>
-    <a class="dropdown-item" href="#">Delete</a>
+    <span class="dropdown-item clickable" id="copy">Copy</span>  <!-- css: on_hover kezecske -->
+    <span class="dropdown-item clickable" id="move">Move</span>
+    <span class="dropdown-item clickable" id="delete">Delete</span>
   </div>
 
   <script type="text/javascript" src="{{url_for('static', filename='js/jquery.min.js')}}"></script>

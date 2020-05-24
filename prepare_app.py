@@ -5,7 +5,7 @@ from pathlib2 import Path
 import os
 
 app = Flask(__name__, static_url_path='/assets', static_folder='assets')
-root = Path(os.getenv('FS_PATH', '/tmp')).absolute()
+root = Path(os.getenv('FS_PATH', '/data')).absolute()
 store = root / '.store'
 key = os.getenv('FS_KEY', '')
 

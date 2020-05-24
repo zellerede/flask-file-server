@@ -94,16 +94,14 @@ $(document).ready(function(){
     $('#close-uploader').click(function() {
         $('#filer_input').prop("jFiler").reset();
     });
-    $('#create-folder').submit(function(e) {
-        var newUrl = $('#create-folder-input').value;
-        alert("Creating "+newUrl); ///
+    $('#create-folder').submit(function(event) {
+        event.preventDefault();
+        var newUrl = $('#create-folder-input').val();
+        this.reset();
+        $('#createfolder-modal').modal('hide');
         $.post(newUrl, '', function() {
-            alert("Success!"); ///
-            // todo: redirect to given newUrl
+            window.location.replace(newUrl);
         });
-    });
-    $('#close-createfolder').click(function() {
-        $('#create-folder-input').val(function() {return this.defaultVaule});
     });
 
     $('.jumbotron').on('contextmenu', function(e) {
