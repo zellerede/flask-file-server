@@ -118,11 +118,15 @@ $(document).ready(function(){
     $("#context-menu a").on("click", function() {
         $(this).parent().removeClass("show").hide();
     });
+    $("#delete").on("click", function(e) {
+        console.log($(this).attr('id'));  // id="delete"  but we want the original element... :(
+    });
 
     document.body.addEventListener('click', function(event) {
         // TODO: correct behavior
         var contextMenu = $("#context-menu");
         if (contextMenu.attr('class').split(/\s+/).includes('show')) {
+            console.log("Caught me"); ///
             contextMenu.removeClass("show").hide();
             event.preventDefault();
         }
