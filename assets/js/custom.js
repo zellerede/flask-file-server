@@ -92,7 +92,18 @@ $(document).ready(function(){
         }
     });
     $('#close-uploader').click(function() {
-        $('#filer_input').prop("jFiler").reset()
+        $('#filer_input').prop("jFiler").reset();
+    });
+    $('#create-folder').submit(function(e) {
+        var newUrl = $('#create-folder-input').value;
+        alert("Creating "+newUrl); ///
+        $.post(newUrl, '', function() {
+            alert("Success!"); ///
+            // todo: redirect to given newUrl
+        });
+    });
+    $('#close-createfolder').click(function() {
+        $('#create-folder-input').val(function() {return this.defaultVaule});
     });
 
     $('.jumbotron').on('contextmenu', function(e) {
@@ -103,14 +114,19 @@ $(document).ready(function(){
             top: top,
             left: left
         }).addClass("show");
-        return false; //blocks default Webbrowser right click menu
+        return false; // blocks default Webbrowser right click menu
     });
     
     $("#context-menu a").on("click", function() {
         $(this).parent().removeClass("show").hide();
     });
 
-    document.body.addEventListener('click', function() {
-        $("#context-menu").removeClass("show").hide();
-    }, true);
+    document.body.addEventListener('click', function(event) {
+        // TODO: correct behavior
+        var contextMenu = $("#context-menu");
+        if (contextMenu.attr('class').split(/\s+/).includes('show')) {
+            contextMenu.removeClass("show").hide();
+            event.preventDefault();
+        }
+    }, false);
 });

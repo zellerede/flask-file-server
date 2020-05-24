@@ -99,9 +99,10 @@ class PathView(MethodView):
             info['size'] = sz
             total['size'] += sz
             contents.append(info)
-        page = render_template('index.html', path=self.orig_path, contents=contents, total=total, hide_dotfile=hide_dotfile)
+        context = dict(path=self.orig_path, contents=contents, total=total)
+        page = render_template('index.html', **context)
         res = make_response(page, 200)
-        res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
+        # res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)
         # TODO: answer json if json was requested
         return res
 

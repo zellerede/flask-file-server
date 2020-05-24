@@ -30,7 +30,8 @@
       </div>
       <div class="pull-sm-right">
         <div class="btn-group">
-          <!-- TODO: button for file operations -->
+          <!-- TODO: maybe dropwdown for further file operations -->
+          <a data-toggle="modal" data-target="#createfolder-modal" class="btn btn-secondary text-muted">Create Folder</a>
           <a data-toggle="modal" data-target="#uploader-modal" class="btn btn-secondary text-muted">Upload</a>
         </div>
       </div>
@@ -140,12 +141,32 @@
         </div>
       </div>
     </div>
+    <div class="modal fade" id="createfolder-modal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-body">
+            <form id="create-folder">
+              <span>Enter name of folder to be created:</span>
+              <input type="text" id="create-folder-input" autofocus
+                     value="{{path}}" autocomplete=“off” class="form-control"
+                     placeholder="{{'' if path else 'Type full folder path to create'}}">
+            </form>
+          </div>
+          <div class="modal-footer">
+            <div class="pull-xs-right">
+              <button type="button" id="close-createfolder" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="dropdown-menu dropdown-menu-sm" id="context-menu">
-    <a class="dropdown-item" href="#">Action</a>
-    <a class="dropdown-item" href="#">Another action</a>
-    <a class="dropdown-item" href="#">Something else here</a>
+    <a class="dropdown-item" href="#">Copy</a>
+    <a class="dropdown-item" href="#">Move</a>
+    <a class="dropdown-item" href="#">Delete</a>
   </div>
 
   <script type="text/javascript" src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
