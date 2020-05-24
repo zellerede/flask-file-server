@@ -94,7 +94,7 @@ $(document).ready(function(){
     $('#close-uploader').click(function() {
         $('#filer_input').prop("jFiler").reset();
     });
-    $('#create-folder').submit(function(event) {
+    var submitCreateFolder = function(event) {
         event.preventDefault();
         var newUrl = $('#create-folder-input').val();
         this.reset();
@@ -102,7 +102,28 @@ $(document).ready(function(){
         $.post(newUrl, '', function() {
             window.location.replace(newUrl);
         });
+    };
+    $('#create-folder').submit(submitCreateFolder);
+    $('#submit-createfolder').on('click', submitCreateFolder);
+    
+    /// test
+    $.contextMenu({
+        selector: '.context-menu', 
+        callback: function(key, options) {
+            var m = "clicked: " + key;
+            window.console && console.log(m) || alert(m); 
+        },
+        items: {
+            "copy": {name: "Copy", icon: "copy"},
+            "move": {name: "Move", icon: "move"},
+            "delete": {name: "Delete", icon: "delete"}
+        }
     });
+
+    $('.context-menu').on('click', function() {
+        console.log('clicked', this);
+    });
+    ///
 
     $('.jumbotron').on('contextmenu', function(e) {
         var top = e.pageY - 10;

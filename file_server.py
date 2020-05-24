@@ -16,7 +16,7 @@ import operations
 from decorators import path_operation
 
 
-CHUNKSIZE = 1<<20
+CHUNKSIZE = 1 << 20
 
 
 def partial_response(path, start, end=None):
@@ -122,7 +122,6 @@ class PathView(MethodView):
         temppath.rename(storepath)
         target_path.symlink_to(storepath)
 
-
     @path_operation(authenticate=True, mkdirs=True)
     def put(self, path):
         result_code = 201
@@ -188,7 +187,8 @@ app = prep.app
 path_view = PathView.as_view('path_view')
 app.register_blueprint(operations.api)
 app.add_url_rule('/', view_func=path_view)
-app.add_url_rule('/<path:p>', view_func=path_view)
+# /favicon.ico
+app.add_url_rule('/<path:p>/', view_func=path_view)
 
 if __name__ == '__main__':
     bind = os.getenv('FS_BIND', '0.0.0.0')

@@ -63,7 +63,7 @@
           </tr>
           {% endfor %}
           {% for entry in contents if entry.type == 'file' %}
-          <tr class="jumbotron">
+          <tr class="context-menu">
               <td class="text-xs-left " data-sort-value="file-{{entry.name | lower}}"><i class="fa fa-fw {{entry.name | icon_fmt}} " aria-hidden="true"></i>&nbsp;
                 <a {% if entry.name | data_fmt not in ['unknown', 'archive'] %} data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}" {% endif %}
                    href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">{{entry.name}}</a>
@@ -154,7 +154,8 @@
           </div>
           <div class="modal-footer">
             <div class="pull-xs-right">
-              <button type="button" id="close-createfolder" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" id="submit-createfolder" class="btn btn-primary" data-dismiss="modal">Create</button>
+              <button type="button" id="close-createfolder" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             </div>
           </div>
         </div>

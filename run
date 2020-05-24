@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+
+start_server() {
+    ./file_server.py &
+    export PID=$!
+}
+
+stop_server() {
+    echo
+    echo "Stopping file server"
+    kill -9 $PID
+}
+
+
+# MAIN
+#
+cd $(dirname "$0")
+trap stop_server INT
+
+start_server
+
+while inotifywait -re close_write . >/dev/null
+do
+    stop_server
+    start_server
+done
