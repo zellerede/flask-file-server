@@ -102,7 +102,6 @@ $(document).ready(function(){
     var onSubmitModal = function(event) {
         event.preventDefault();
         modal.input = $('#modal-input').val();
-        modal.form.trigger('reset');
         modal.main.modal('hide'); // .removeClass('show')
         modal.submit(event);
     }
@@ -118,7 +117,8 @@ $(document).ready(function(){
     $('#createfolder-button').on('click', function() {
         $('#modal-text').html('Enter name of folder to be created:');
         var placeholder = 'Type ' + ((path && path!=='/') ? 'relative or ' : '') + 'full folder path to create';
-        $('#modal-input').attr('name', 'folderName').attr('placeholder', placeholder);
+        $('#modal-input').attr('name', 'folderName').attr('value', '')
+            .attr('placeholder', placeholder);
         $('#submit-modal').html('Create');
         modal.submit = submitCreateFolder;
     });
@@ -142,18 +142,27 @@ $(document).ready(function(){
     });
 
     var submitCopy = function() {
-        console.log('/api/v1/copy' + path + chosenRow);
         $.post('/api/v1/copy' + path + chosenRow + '?to=' + modal.input, '',
             function() { location.reload(); });
     };
-
     $("#copy").on("click", function() {
         $('#modal-text').html('Enter full target path:');
         $('#modal-input').attr('name', 'target').attr('value', path + chosenRow);
         $('#submit-modal').html('Copy');
         modal.submit = submitCopy;
-    })
-    
+    });
+
+    var submitMove = function() {
+        $.post('/api/v1/move' + path + chosenRow + '?to=' + modal.input, '',
+            function() { location.reload(); });
+    };
+    $("#move").on("click", function() {
+        $('#modal-text').html('Enter full target path:');
+        $('#modal-input').attr('name', 'target').attr('value', path + chosenRow);
+        $('#submit-modal').html('Move');
+        modal.submit = submitMove;
+    });
+
     $("#delete").on("click", function() {
         // TODO: modal for 'are you sure?'
         $.ajax({
@@ -166,9 +175,7 @@ $(document).ready(function(){
     });
 
     document.body.addEventListener('click', function(event) {
-        // TODO: correct behavior
         if (contextMenu.attr('class').split(/\s+/).includes('show')) {
-            chosenRow = null;
             contextMenu.removeClass("show").hide();
             event.preventDefault();
         }
