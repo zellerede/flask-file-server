@@ -17,7 +17,7 @@
         <ol class="breadcrumb" dir="ltr">
             <li class="breadcrumb-item"><a href="{{url_for('path_view')}}"><i class="fa fa-fw fa-home fa-lg"></i> </a></li>
             {% for part in path.strip('/').split('/') %}
-            <li class="breadcrumb-item"><a href="{{url_for('path_view', p='/'+path[:path.find(part)+part|length]+'/')}}"><strong>{{ part }}</strong></a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('path_view', p='/'+path[:path.find(part)+part|length])}}"><strong>{{ part }}</strong></a></li>
             {% endfor %}
              <li class="login"><a data-toggle="modal" data-target="#login-modal" class="btn btn-secondary text-muted"><i class="fa fa-fw fa-user"></i><strong id="userlogin">Login</strong></a></li>
         </ol>
@@ -54,7 +54,7 @@
         </tfoot>
         <tbody>
           {% for entry in contents if entry.type == 'dir' %}
-          <tr class="jumbotron">
+          <tr class="jumbotron" name="{{entry.name}}">
             <td class="text-xs-left " data-sort-value="dir-{{entry.name | lower}}">
               <i class="fa fa-fw fa-folder " aria-hidden="true"></i>&nbsp;<a href="{{entry.name}}/" ><strong>{{entry.name}}</strong></a>
             </td>
@@ -63,7 +63,7 @@
           </tr>
           {% endfor %}
           {% for entry in contents if entry.type == 'file' %}
-          <tr class="context-menu">
+          <tr class="jumbotron" name="{{entry.name}}">
               <td class="text-xs-left " data-sort-value="file-{{entry.name | lower}}"><i class="fa fa-fw {{entry.name | icon_fmt}} " aria-hidden="true"></i>&nbsp;
                 <a {% if entry.name | data_fmt not in ['unknown', 'archive'] %} data-toggle="modal" data-target="#viewer-modal" data-type="{{entry.name | data_fmt}}" {% endif %}
                    href="{{entry.name}}" data-size="{{entry.size | size_fmt}}">{{entry.name}}</a>

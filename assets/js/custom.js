@@ -14,6 +14,8 @@ function getCookie(cname) {
   return undefined;
 }
 $(document).ready(function(){
+    const path = location.pathname;
+
     $("#login").submit(function( event ) {
       var username = $( "#username" ).val();
       var auth = username && username+":"+$( "#password" ).val();
@@ -94,60 +96,57 @@ $(document).ready(function(){
     $('#close-uploader').click(function() {
         $('#filer_input').prop("jFiler").reset();
     });
+    var createFolderForm = $('#create-folder');
     var submitCreateFolder = function(event) {
         event.preventDefault();
         var newUrl = $('#create-folder-input').val();
-        this.reset();
+        createFolderForm.trigger('reset');
         $('#createfolder-modal').modal('hide');
         $.post(newUrl, '', function() {
-            window.location.replace(newUrl);
+            location.replace(newUrl);
         });
     };
-    $('#create-folder').submit(submitCreateFolder);
+    createFolderForm.submit(submitCreateFolder);
     $('#submit-createfolder').on('click', submitCreateFolder);
-    
-    /// test
-    $.contextMenu({
-        selector: '.context-menu', 
-        callback: function(key, options) {
-            var m = "clicked: " + key;
-            window.console && console.log(m) || alert(m); 
-        },
-        items: {
-            "copy": {name: "Copy", icon: "copy"},
-            "move": {name: "Move", icon: "move"},
-            "delete": {name: "Delete", icon: "delete"}
-        }
-    });
 
-    $('.context-menu').on('click', function() {
-        console.log('clicked', this);
-    });
-    ///
-
+    var chosenRow = null;
+    var contextMenu = $("#context-menu");
     $('.jumbotron').on('contextmenu', function(e) {
         var top = e.pageY - 10;
         var left = e.pageX - 90;
-        $("#context-menu").css({
+        contextMenu.css({
             display: "block",
             top: top,
             left: left
         }).addClass("show");
+        chosenRow = $(this).attr('name');
         return false; // blocks default Webbrowser right click menu
     });
     
     $("#context-menu a").on("click", function() {
-        $(this).parent().removeClass("show").hide();
+        contextMenu.removeClass("show").hide();
     });
-    $("#delete").on("click", function(e) {
-        console.log($(this).attr('id'));  // id="delete"  but we want the original element... :(
+    $("#copy").on("click", function() {
+        // open modal for copy
+        console.log('/api/v1/copy' + path + chosenRow);
+        $.post('/api/v1/copy' + path + chosenRow + '?to=' + path + 'filecopy', '',
+            function() { location.reload(); });
+    })
+    $("#delete").on("click", function() {
+        // TODO: modal for 'are you sure?'
+        $.ajax({
+            url: chosenRow,
+            type: 'DELETE',
+            success: function() {
+                location.reload();
+            }
+        });
     });
 
     document.body.addEventListener('click', function(event) {
         // TODO: correct behavior
-        var contextMenu = $("#context-menu");
         if (contextMenu.attr('class').split(/\s+/).includes('show')) {
-            console.log("Caught me"); ///
+            chosenRow = null;
             contextMenu.removeClass("show").hide();
             event.preventDefault();
         }

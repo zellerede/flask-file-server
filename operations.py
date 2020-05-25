@@ -24,12 +24,12 @@ def copy_links(source, target):
         raise Exception(f"404 Unknown source {source}")
 
 
-@api.route('/copy/<path:source>/', methods=['POST'])
+@api.route('/copy/<path:source>', methods=['POST'])
 def copy(source):
     return copy_or_move(source, copy_links)
 
 
-@api.route('/move/<path:source>/', methods=['POST'])
+@api.route('/move/<path:source>', methods=['POST'])
 def move(source):
     return copy_or_move(source, prep.Path.rename)
 
@@ -42,7 +42,7 @@ def copy_or_move(source, oper):
         print(f"COPYING/MOVING, {source} -> {target}")
         source_path = (prep.root / source).absolute()
         target_path = (prep.root / target).absolute()
-        target_path.mkdir(parents=True, exist_ok=True)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         print(f"{source_path} ==> {target_path}")
         try:
             oper(source_path, target_path)
@@ -65,8 +65,8 @@ def send():
     pathmaps = data.get("pathmaps", {})
     assert isinstance(pathmaps, dict), "Argument 'pathmaps' must be a map (str->str)"
 
-    globsets = (set(glob(f"{prep.root}/{g}", recursive=True)) for g in globs)
-    filepaths = set.union(*globsets)
+    matchesPerGlob = (set(glob(str(prep.root / g), recursive=True)) for g in globs)
+    filepaths = set.union(*matchesPerGlob)
 
     # TODO: launch sending in background, and send back 202
     for path in filepaths:
