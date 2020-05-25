@@ -96,18 +96,32 @@ $(document).ready(function(){
     $('#close-uploader').click(function() {
         $('#filer_input').prop("jFiler").reset();
     });
-    var createFolderForm = $('#create-folder');
-    var submitCreateFolder = function(event) {
+    
+    // Generic modal for asking a path
+    var modal = {main: $('#askpath-modal'), form: $('#modal-form')};
+    var onSubmitModal = function(event) {
         event.preventDefault();
-        var newUrl = $('#create-folder-input').val();
-        createFolderForm.trigger('reset');
-        $('#createfolder-modal').modal('hide');
+        modal.input = $('#modal-input').val();
+        modal.form.trigger('reset');
+        modal.main.modal('hide'); // .removeClass('show')
+        modal.submit(event);
+    }
+    modal.form.submit(onSubmitModal);
+    $('#submit-modal').on('click', onSubmitModal);
+
+    var submitCreateFolder = function() {
+        var newUrl = modal.input;
         $.post(newUrl, '', function() {
             location.replace(newUrl);
         });
     };
-    createFolderForm.submit(submitCreateFolder);
-    $('#submit-createfolder').on('click', submitCreateFolder);
+    $('#createfolder-button').on('click', function() {
+        $('#modal-text').html('Enter name of folder to be created:');
+        var placeholder = 'Type ' + ((path && path!=='/') ? 'relative or ' : '') + 'full folder path to create';
+        $('#modal-input').attr('name', 'folderName').attr('placeholder', placeholder);
+        $('#submit-modal').html('Create');
+        modal.submit = submitCreateFolder;
+    });
 
     var chosenRow = null;
     var contextMenu = $("#context-menu");
@@ -126,12 +140,20 @@ $(document).ready(function(){
     $("#context-menu a").on("click", function() {
         contextMenu.removeClass("show").hide();
     });
-    $("#copy").on("click", function() {
-        // open modal for copy
+
+    var submitCopy = function() {
         console.log('/api/v1/copy' + path + chosenRow);
-        $.post('/api/v1/copy' + path + chosenRow + '?to=' + path + 'filecopy', '',
+        $.post('/api/v1/copy' + path + chosenRow + '?to=' + modal.input, '',
             function() { location.reload(); });
+    };
+
+    $("#copy").on("click", function() {
+        $('#modal-text').html('Enter full target path:');
+        $('#modal-input').attr('name', 'target').attr('value', path + chosenRow);
+        $('#submit-modal').html('Copy');
+        modal.submit = submitCopy;
     })
+    
     $("#delete").on("click", function() {
         // TODO: modal for 'are you sure?'
         $.ajax({

@@ -99,7 +99,7 @@ class PathView(MethodView):
             info['size'] = sz
             total['size'] += sz
             contents.append(info)
-        context = dict(path=self.orig_path, contents=contents, total=total)
+        context = dict(paths=self.paths, contents=contents, total=total)
         page = render_template('index.html', **context)
         res = make_response(page, 200)
         # res.set_cookie('hide-dotfile', hide_dotfile, max_age=16070400)

@@ -39,7 +39,7 @@ class path_operation:
             if p.startswith('api/'):
                 return self.json404()
 
-            _self.orig_path = p
+            _self.paths = prep.Path(p).parts
             path = prep.root / p
             _self.dir_path = path if self.path_is_folder else path.parent
             if self.mkdirs:
