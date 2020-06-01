@@ -14,7 +14,7 @@ import hashlib
 import prepare_app as prep
 import operations
 from decorators import path_operation
-import trigger_actions as actions
+from trigger_actions import actions
 
 
 CHUNKSIZE = 1 << 20
@@ -109,6 +109,7 @@ class PathView(MethodView):
 
     def _save_file(self, fileobj, target_path):
         actions.before_upload(target_path)
+
         temppath = prep.store / str(uuid4())
         md5 = hashlib.md5()
 
@@ -118,11 +119,14 @@ class PathView(MethodView):
                 if not data:
                     break
                 md5.update(data)
+                actions.on_chunk(data, target_path)
                 output.write(data)
-        
+
         storepath = prep.store / md5.hexdigest()
         temppath.rename(storepath)
         target_path.symlink_to(storepath)
+
+        actions.after_upload(target_path)
 
     @path_operation(authenticate=True, mkdirs=True)
     def put(self, path):
